@@ -1,0 +1,16 @@
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# dữ liệu tải tự động
+data/
+
+# kết quả chạy thử nhanh
+results_quick/
+
+# file trung gian của LaTeX
+reports/*.aux
+reports/*.log
+reports/*.out
+reports/*.toc
+reports/*.synctex.gz
