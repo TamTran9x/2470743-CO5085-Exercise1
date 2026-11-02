@@ -1,0 +1,47 @@
+{
+  "name": "E2-patch4-torch",
+  "params": 306826,
+  "best_epoch": 19,
+  "best_val_acc": 0.9001666666666667,
+  "test_acc": 0.8967,
+  "test_loss": 0.3048539668321609,
+  "final_train_acc": 0.9345925925925926,
+  "final_train_loss": 0.17553034944887513,
+  "mean_epoch_time": 6.6600453171052525,
+  "total_train_time": 133.20541194999976,
+  "test_inference_time": 0.32472980800002915,
+  "data_sizes": {
+    "train": 54000,
+    "val": 6000,
+    "test": 10000
+  },
+  "norm_mean": 0.2858346998691559,
+  "norm_std": 0.3529006540775299,
+  "config": {
+    "epochs": 20,
+    "lr": 0.001,
+    "weight_decay": 0.05,
+    "warmup_epochs": 1.0,
+    "grad_clip": 0.0,
+    "label_smoothing": 0.0,
+    "seed": 42,
+    "extra": {
+      "exercise": "E2",
+      "tokenizer": "patch4",
+      "attn_impl": "torch",
+      "num_tokens": 50,
+      "embed_dim": 96,
+      "depth": 4,
+      "heads": 4,
+      "mlp_ratio": 2.0,
+      "dropout": 0.1,
+      "batch_size": 128
+    }
+  },
+  "env": {
+    "torch": "2.11.0+cu130",
+    "cuda_available": true,
+    "device_name": "Tesla T4",
+    "torchvision": "0.26.0+cu130"
+  }
+}

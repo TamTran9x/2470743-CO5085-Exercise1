@@ -1,0 +1,601 @@
+% Báo cáo chung E1–E3 — CO5085 Học sâu và ứng dụng trong thị giác máy tính
+% Biên dịch bằng XeLaTeX (Overleaf: Menu → Compiler → XeLaTeX).
+% Bảng, hình và số liệu trong generated/ do scripts/make_report_assets.py sinh từ results/.
+% Template trang bìa và header: hcmut-report.cls, codespace.sty, graphics/hcmut.png.
+% hcmut-report.cls đã nạp sẵn geometry, amsmath, amssymb, graphicx, booktabs, caption, fancyhdr, hyperref,
+% babel (vietnamese); không nạp lại ở đây (nạp lại geometry với tùy chọn khác gây lỗi "Option clash").
+\documentclass[twoside,final]{hcmut-report}
+\usepackage{codespace}
+\usepackage{fontspec}
+
+% Encodings
+\usepackage{gensymb,textcomp}
+
+% Better tables
+\usepackage{array,longtable,multicol,multirow,siunitx,tabularx}
+
+% Better enum
+\usepackage{enumitem}
+\setlist{itemsep=2pt,topsep=4pt}
+
+% Graphics
+\usepackage{float}
+\captionsetup{font=small,labelfont=bf}
+
+% Add options for figures, like max width, framing, etc.
+\usepackage[export]{adjustbox}
+
+% References
+% Use \Cref{} instead of \ref{}
+\usepackage[nameinlink]{cleveref}
+
+% Code: kiểu khung lấy từ codespace.sty
+\lstset{language=Python,basicstyle=\color{codebasic}\ttfamily\small,columns=fullflexible,keepspaces=true}
+\renewcommand{\lstlistingname}{Đoạn mã}
+\renewcommand{\lstlistlistingname}{Danh sách đoạn mã}
+
+\emergencystretch=3em
+\tolerance=2000
+
+% ------------------------------------------------------------------ thông tin học viên
+\newcommand{\hocvien}{Trần Hoài Tâm}
+\newcommand{\mshv}{2470743}
+\newcommand{\repourl}{https://github.com/TamTran9x/2470743-CO5085-Exercise1}
+\newcommand{\pagesurl}{https://tamtran9x.github.io/2470743-CO5085-Exercise1/}
+
+% ------------------------------------------------------------------ số liệu sinh tự động
+\makeatletter
+\newcommand{\res}[1]{\ifcsname res@#1\endcsname\csname res@#1\endcsname\else\textbf{??}\fi}
+\makeatother
+\InputIfFileExists{generated/numbers.tex}{}{}
+
+\newcommand{\gen}[1]{\IfFileExists{generated/#1}{\adjustbox{max width=\linewidth}{\input{generated/#1}}}{\textit{(chưa có generated/#1 — chạy scripts/make\_report\_assets.py)}}}
+\newcommand{\genfig}[2]{\IfFileExists{generated/#1}{\includegraphics[width=#2]{generated/#1}}{\fbox{\parbox{0.8\linewidth}{\centering\small chưa có generated/#1}}}}
+
+% ------------------------------------------------------------------ trang bìa (hcmut-report.cls)
+\coursename{\parbox[c]{0.85\linewidth}{\centering Học sâu và ứng dụng trong thị giác máy tính (CO5085)}}
+\reporttype{Exercise Report}
+\title{Báo cáo bài tập E1, E2, E3}
+\advisor{& TS. Lê Thành Sách và TS. Nguyễn Quốc Minh &}
+\stuname{%
+  & \hocvien & \mshv
+}
+
+% Set depth of numbering for counters
+\AtBeginDocument{\counterwithin{lstlisting}{section}}
+
+\begin{document}
+\coverpage%
+
+\section*{Thông tin nộp bài}
+\begin{tabular}{@{}ll@{}}
+Học viên:     & \hocvien{} — MSHV \mshv \\
+Mã nguồn:     & \url{\repourl} \\
+GitHub Pages: & \url{\pagesurl} \\
+\end{tabular}
+
+\tableofcontents
+\listoffigures
+\listoftables
+\lstlistoflistings{}
+
+\clearpage
+
+% ================================================================== 1. THIẾT LẬP CHUNG
+\section{Dữ liệu và thiết lập chung}
+
+\subsection{Tập dữ liệu}
+Cả ba bài dùng chung tập \textbf{Fashion-MNIST}: ảnh xám $28\times28$ của 10 loại quần áo, giày dép và túi
+(T-shirt/top, Trouser, Pullover, Dress, Coat, Sandal, Shirt, Sneaker, Bag, Ankle boot), gồm 60\,000 ảnh
+huấn luyện và 10\,000 ảnh kiểm tra, các lớp cân bằng (6\,000 ảnh/lớp ở tập huấn luyện).
+
+Fashion-MNIST được chọn thay vì MNIST vì MNIST quá dễ: một bộ phân loại tuyến tính đã đạt khoảng 92\%, nên
+khoảng cách giữa softmax, MLP và CNN rất nhỏ và khó phân tích. Fashion-MNIST có các lớp gần nhau về hình dạng
+(Shirt, T-shirt/top, Pullover, Coat), tạo ra lỗi có cấu trúc để phân tích. So với CIFAR-10, ảnh $28\times28$
+một kênh giúp các thí nghiệm Transformer và LSTM/GRU chạy nhanh hơn và rất tiện để biểu diễn thành chuỗi
+(28 hàng là 28 bước thời gian).
+
+\subsection{Chia dữ liệu và tiền xử lý}
+\begin{itemize}
+  \item 60\,000 ảnh huấn luyện gốc được hoán vị bằng seed cố định 42: \res{data-train} ảnh để \emph{train},
+        \res{data-val} ảnh để \emph{validation}. Tập \emph{test} gốc \res{data-test} ảnh chỉ dùng một lần cho
+        kết quả cuối.
+  \item Mọi mô hình ở E1–E3 dùng đúng cùng một split (có test tự động kiểm tra trong \texttt{tests/test\_all.py}).
+  \item Ảnh được đưa về $[0,1]$ rồi chuẩn hóa $x \leftarrow (x-\mu)/\sigma$ với $\mu=\res{data-mean}$,
+        $\sigma=\res{data-std}$ tính \emph{chỉ} trên phần train. Không dùng tăng cường dữ liệu, để so sánh các
+        kiến trúc trong cùng điều kiện.
+\end{itemize}
+
+\subsection{Vòng lặp huấn luyện}
+Vòng lặp được tự viết trong \texttt{common/engine.py}, dùng chung cho cả ba bài, đúng trình tự
+forward $\rightarrow$ loss $\rightarrow$ \texttt{backward()} $\rightarrow$ \texttt{optimizer.step()}:
+
+\begin{lstlisting}[caption={Vòng lặp huấn luyện tự viết (rút gọn từ \texttt{common/engine.py})}]
+for x, y in loader:
+    logits = model(x)                 # forward, (B, 10), not softmaxed
+    loss = criterion(logits, y)       # CrossEntropyLoss = log-softmax + NLL
+    optimizer.zero_grad(set_to_none=True)
+    loss.backward()                   # backward
+    if grad_clip > 0:
+        nn.utils.clip_grad_norm_(model.parameters(), grad_clip)
+    optimizer.step()                  # update
+    scheduler.step()                  # per-step learning rate
+\end{lstlisting}
+
+\begin{itemize}
+  \item \textbf{Loss:} \texttt{nn.CrossEntropyLoss} nhận logits; softmax nằm sẵn trong loss nên các mô hình
+        không đặt softmax ở cuối \texttt{forward}.
+  \item \textbf{Optimizer:} AdamW, không áp weight decay cho bias, tham số chuẩn hóa, token CLS và
+        positional embedding.
+  \item \textbf{Learning rate:} cập nhật theo từng bước, warmup tuyến tính (nếu có) rồi giảm theo cosine về 0.
+  \item \textbf{Chọn mô hình:} sau mỗi epoch đánh giá trên validation; lưu checkpoint có val accuracy cao nhất.
+        Kết quả test dùng checkpoint này, không chọn theo test.
+  \item \textbf{Ghi log:} mỗi lần chạy lưu \texttt{history.csv} (loss/accuracy train và val, LR, thời gian mỗi
+        epoch), \texttt{summary.json}, \texttt{best.pt} và logits trên tập test.
+  \item \textbf{Tái lập:} cố định seed cho Python, NumPy, PyTorch, thứ tự batch; bật chế độ deterministic của cuDNN.
+\end{itemize}
+
+\subsection{Môi trường}
+Các thí nghiệm chạy trên \res{env-device}, PyTorch \res{env-torch}. Thời gian mỗi epoch được đo sau khi
+đồng bộ GPU (\texttt{torch.cuda.synchronize}) và lấy trung bình từ epoch thứ 2 để bỏ chi phí khởi động.
+Cách chạy lại toàn bộ thí nghiệm được ghi trong \texttt{README.md} của repository.
+
+% ================================================================== 2. E1
+\section{E1 — Phân loại ảnh bằng Softmax, MLP và CNN}
+
+\subsection{Kiến trúc}
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{lp{8.2cm}r}
+\toprule
+Mô hình & Cấu trúc & Số tham số \\
+\midrule
+Softmax & Flatten (784) $\rightarrow$ Linear(784, 10) & $784\cdot10+10 = 7\,850$ \\
+MLP & Flatten $\rightarrow$ Linear(784, 512) $\rightarrow$ ReLU $\rightarrow$ Dropout(0.2) $\rightarrow$
+      Linear(512, 256) $\rightarrow$ ReLU $\rightarrow$ Dropout(0.2) $\rightarrow$ Linear(256, 10) & 535\,818 \\
+CNN & [Conv3$\times$3(32)–BN–ReLU]$\times$2 $\rightarrow$ MaxPool $\rightarrow$
+      [Conv3$\times$3(64)–BN–ReLU]$\times$2 $\rightarrow$ MaxPool $\rightarrow$ Flatten (3136)
+      $\rightarrow$ Linear(3136, 128) $\rightarrow$ ReLU $\rightarrow$ Dropout(0.3) $\rightarrow$ Linear(128, 10) & 468\,010 \\
+\bottomrule
+\end{tabular}
+\caption{Ba bộ phân loại của E1. Cả ba trả về 10 logits; softmax được áp trong hàm loss.}
+\end{table}
+
+\begin{itemize}
+  \item \textbf{Softmax} là hồi quy logistic đa lớp: $p(y\mid x)=\mathrm{softmax}(Wx+b)$, ranh giới quyết định
+        giữa hai lớp bất kỳ là một siêu phẳng trong không gian 784 chiều.
+  \item \textbf{MLP} thêm hai tầng ẩn phi tuyến nhưng vẫn nhận vector flatten, nên không biết hai pixel nào
+        nằm cạnh nhau. Số tham số: $784\cdot512+512 + 512\cdot256+256 + 256\cdot10+10 = 535\,818$.
+  \item \textbf{CNN} dùng tích chập $3\times3$ (tính cục bộ, chia sẻ trọng số) và pooling. Conv đặt
+        \texttt{bias=False} vì BatchNorm ngay sau đã có tham số dịch. Phần tích chập chỉ có 65\,184 tham số;
+        phần lớn tham số (401\,536) nằm ở tầng Linear(3136, 128). Kích thước được chọn để CNN và MLP có số
+        tham số cùng bậc, giúp so sánh công bằng hơn.
+\end{itemize}
+
+\subsection{Huấn luyện}
+Cả ba mô hình dùng cùng cấu hình: \res{E1-cnn-epochs} epoch, batch 128, AdamW với LR $10^{-3}$, weight decay
+$10^{-4}$, cosine schedule; cùng seed và cùng thứ tự batch.
+
+\subsection{Kết quả}
+\begin{table}[H]
+\centering\small
+\gen{e1_table.tex}
+\caption{Kết quả E1 trên Fashion-MNIST. Giá trị cao nhất in đậm.}
+\label{tab:e1}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\genfig{e1_curves.pdf}{\linewidth}
+\caption{Đường cong loss và accuracy của E1 (nét chấm: train, nét liền: validation).}
+\label{fig:e1curves}
+\end{figure}
+
+\begin{table}[H]
+\centering\small
+\gen{e1_perclass.tex}
+\caption{Accuracy (\%) theo từng lớp trên tập test.}
+\label{tab:e1perclass}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\genfig{e1_confusion_cnn.pdf}{0.72\linewidth}
+\caption{Confusion matrix của CNN trên tập test (số trong ô là số ảnh, màu là tỉ lệ theo hàng).}
+\label{fig:e1cm}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\genfig{e1_confusion_all.pdf}{\linewidth}
+\caption{Tỉ lệ lỗi theo cặp lớp của ba mô hình (đã bỏ đường chéo, cùng thang màu).}
+\label{fig:e1cmall}
+\end{figure}
+
+\begin{table}[H]
+\centering\small
+\gen{e1_confused_pairs.tex}
+\caption{Các cặp lớp bị nhầm nhiều nhất (số ảnh test).}
+\label{tab:e1pairs}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\genfig{e1_errors.pdf}{\linewidth}
+\caption{Một số ảnh test CNN đoán sai với xác suất dự đoán cao nhất.}
+\label{fig:e1errors}
+\end{figure}
+
+\subsection{Nhận xét}
+\begin{itemize}
+  \item \textbf{Thứ hạng rõ ràng:} Softmax \res{E1-softmax-test}\% $\rightarrow$ MLP \res{E1-mlp-test}\% $\rightarrow$
+        CNN \res{E1-cnn-test}\% trên test. Số ảnh sai giảm từ \res{E1-softmax-errors} xuống \res{E1-mlp-errors}
+        rồi \res{E1-cnn-errors}: CNN bớt khoảng một phần ba số lỗi so với MLP.
+  \item \textbf{Số tham số không quyết định:} CNN có \res{E1-cnn-params} tham số, \emph{ít hơn} MLP
+        (\res{E1-mlp-params}) nhưng chính xác hơn. Phần tích chập chỉ 65\,184 tham số, khoảng 86\% tham số nằm ở
+        tầng Linear(3136, 128). Lợi thế đến từ inductive bias (tính cục bộ, chia sẻ trọng số, pooling),
+        không đến từ capacity.
+  \item \textbf{Đường cong học (Hình~\ref{fig:e1curves}):}
+        \begin{itemize}
+          \item Softmax: val loss vẫn giảm đến epoch cuối, train acc \res{E1-softmax-train}\% chỉ cao hơn val
+                \res{E1-softmax-gap} điểm. Mô hình bị giới hạn bởi capacity (underfit), không overfit.
+          \item CNN: train loss xuống \res{E1-cnn-trainloss-last}; val loss thấp nhất ở epoch
+                \res{E1-cnn-vallossmin-epoch} (\res{E1-cnn-vallossmin}) rồi tăng lên \res{E1-cnn-valloss-last},
+                trong khi val accuracy vẫn tăng đến epoch \res{E1-cnn-bestepoch}. Mô hình ngày càng tự tin quá
+                mức với các ảnh nó đoán sai: loss phạt nặng lỗi tự tin, accuracy chỉ đếm argmax.
+          \item Nếu chọn checkpoint theo val loss thay vì val accuracy, CNN sẽ dừng ở epoch
+                \res{E1-cnn-vallossmin-epoch} thay vì \res{E1-cnn-bestepoch}.
+        \end{itemize}
+  \item \textbf{Theo lớp (Bảng~\ref{tab:e1perclass}):} Shirt là lớp khó nhất với cả ba mô hình
+        (57.90\% $\rightarrow$ 71.40\% $\rightarrow$ 80.20\%). CNN tăng mạnh nhất so với MLP ở Pullover
+        (+7.9 điểm), Shirt (+8.8) và Coat (+7.2). Trouser, Sandal, Sneaker, Bag, Ankle boot đã trên 93\% ngay với
+        softmax vì hình dạng tổng thể đủ để phân biệt.
+  \item \textbf{Lỗi có cấu trúc (Bảng~\ref{tab:e1pairs}):} cặp nhầm nhiều nhất là \res{E1-toppair-true}
+        $\rightarrow$ \res{E1-toppair-pred} (\res{E1-toppair-count} ảnh với CNN). Tỉ lệ lỗi nằm trong nhóm áo thân
+        trên (T-shirt/top, Pullover, Coat, Shirt) tăng dần \res{E1-softmax-upperbody-share}\% $\rightarrow$
+        \res{E1-mlp-upperbody-share}\% $\rightarrow$ \res{E1-cnn-upperbody-share}\%: mô hình càng tốt thì lỗi còn
+        lại càng dồn vào nhóm vốn mơ hồ ở độ phân giải $28\times28$.
+  \item \textbf{Lỗi chồng lấp:} \res{E1-cnnerr-also-mlp}\% số ảnh CNN đoán sai cũng bị MLP đoán sai, và
+        \res{E1-allwrong} ảnh cả ba mô hình đều sai. Phần lớn lỗi nằm ở ảnh khó thật sự chứ không phải ở điểm
+        yếu riêng của một kiến trúc.
+  \item \textbf{Lỗi tự tin (Hình~\ref{fig:e1errors}):} CNN đoán sai với xác suất gần 1.00. Nhiều ảnh nhìn bằng
+        mắt giống lớp được dự đoán hơn lớp được gán (ví dụ ảnh nhãn Shirt trông như túi, nhãn Trouser trông như
+        váy), cho thấy tập dữ liệu có nhiễu nhãn và xác suất softmax không phản ánh đúng độ chắc chắn.
+  \item \textbf{Chi phí:} trên T4, CNN mất \res{E1-cnn-epochtime}\,s/epoch so với \res{E1-mlp-epochtime}\,s của
+        MLP và suy luận 10\,000 ảnh mất \res{E1-cnn-inftime}\,s so với \res{E1-mlp-inftime}\,s, dù ít tham số
+        hơn: mỗi trọng số tích chập được dùng lại ở mọi vị trí nên số phép tính trên mỗi tham số lớn hơn nhiều.
+\end{itemize}
+
+% ================================================================== 3. E2
+\section{E2 — Transformer: Multi-Head Self-Attention và tokenization}
+
+\subsection{MSA tự viết}
+Với chuỗi token $X\in\mathbb{R}^{N\times D}$, $h$ head và $d_k=D/h$:
+\begin{align*}
+Q &= XW_Q+b_Q,\quad K = XW_K+b_K,\quad V = XW_V+b_V \\
+A_i &= \mathrm{softmax}\!\left(\frac{Q_iK_i^\top}{\sqrt{d_k}}\right)\in\mathbb{R}^{N\times N},\qquad
+\mathrm{head}_i = A_iV_i,\quad i=1,\dots,h \\
+\mathrm{MSA}(X) &= \mathrm{concat}(\mathrm{head}_1,\dots,\mathrm{head}_h)\,W_O + b_O
+\end{align*}
+trong đó $Q_i,K_i,V_i$ là khối cột thứ $i$ (độ rộng $d_k$) của $Q,K,V$. Bản tự viết
+(\texttt{E2/msa.py}, lớp \texttt{MultiHeadSelfAttentionScratch}) chỉ dùng \texttt{nn.Linear},
+\texttt{torch.matmul}, \texttt{torch.softmax} và các phép đổi shape:
+
+\begin{lstlisting}[caption={Phần forward của MSA tự viết (\texttt{E2/msa.py})}]
+q = self._split_heads(self.q_proj(x))                       # (B, h, N, d_k)
+k = self._split_heads(self.k_proj(x))
+v = self._split_heads(self.v_proj(x))
+scores = torch.matmul(q, k.transpose(-2, -1)) * self.scale  # (B, h, N, N)
+attn = torch.softmax(scores, dim=-1)
+out = torch.matmul(self.attn_drop(attn), v)                 # (B, h, N, d_k)
+out = out.transpose(1, 2).reshape(B, N, D)                  # concat heads
+return self.out_proj(out)                                   # (B, N, D)
+\end{lstlisting}
+
+\texttt{\_split\_heads} đổi $(B,N,D)\rightarrow(B,N,h,d_k)\rightarrow(B,h,N,d_k)$ để mọi head được tính
+song song bằng một phép nhân ma trận theo lô. Số tham số của một lớp MSA là $4(D^2+D)$. Trọng số được khởi
+tạo giống \texttt{nn.MultiheadAttention}: Xavier-uniform trên ma trận ghép $[W_Q;W_K;W_V]$ kích thước
+$3D\times D$, bias bằng 0.
+
+\subsection{Bản PyTorch và kiểm chứng tính đúng}
+Bản đối chiếu \texttt{MultiHeadSelfAttentionTorch} bọc \texttt{nn.MultiheadAttention} (với \texttt{batch\_first=True}).
+Để kiểm chứng, trọng số của \texttt{nn.MultiheadAttention} được chép sang bản tự viết
+(\texttt{in\_proj\_weight} là $[W_Q;W_K;W_V]$ xếp chồng, cộng \texttt{out\_proj}), rồi cùng một đầu vào được
+đưa qua hai bản để so sánh đầu ra, ma trận attention của từng head và gradient theo đầu vào
+(\texttt{E2/check\_msa.py}, cùng các test tự động trong \texttt{tests/test\_all.py}).
+
+\begin{table}[H]
+\centering\small
+\gen{e2_msa_check.tex}
+\caption{Sai lệch giữa MSA tự viết và \texttt{nn.MultiheadAttention}.}
+\label{tab:e2check}
+\end{table}
+
+Sai lệch lớn nhất ở đầu ra là \res{E2-check-f64} với float64 và \res{E2-check-f32} với float32, tức chỉ ở
+mức sai số làm tròn số thực: hai cài đặt tính cùng một hàm.
+
+\subsection{Bộ phân loại ảnh}
+Ảnh $\rightarrow$ tokenizer $\rightarrow$ thêm token CLS $\rightarrow$ cộng positional embedding học được
+$\rightarrow$ \res{E2-cfg-depth} khối encoder $\rightarrow$ LayerNorm $\rightarrow$ Linear trên token CLS.
+Mỗi khối encoder dùng dạng pre-norm:
+\[
+X \leftarrow X + \mathrm{Dropout}\big(\mathrm{MSA}(\mathrm{LN}(X))\big),\qquad
+X \leftarrow X + \mathrm{FFN}(\mathrm{LN}(X)),
+\]
+với FFN là Linear($D$, $rD$)–GELU–Linear($rD$, $D$). Cấu hình: $D=\res{E2-cfg-embeddim}$,
+$h=\res{E2-cfg-heads}$ head, $r=\res{E2-cfg-mlpratio}$, dropout \res{E2-cfg-dropout}. Khối encoder được tự lắp
+(không dùng \texttt{nn.TransformerEncoderLayer}) để bản tự viết và bản PyTorch chỉ khác nhau đúng ở phần MSA.
+
+\subsection{Các cách lấy token}
+\begin{table}[H]
+\centering\small
+\begin{tabular}{lp{8.6cm}r}
+\toprule
+Tokenizer & Mỗi token là & $N$ (chưa gồm CLS) \\
+\midrule
+Patch 4$\times$4 & một ô $4\times4$ không chồng nhau, chiếu tuyến tính 16 $\rightarrow D$ & 49 \\
+Patch 7$\times$7 & một ô $7\times7$ không chồng nhau, chiếu tuyến tính 49 $\rightarrow D$ & 16 \\
+Theo hàng & một hàng 28 pixel, chiếu tuyến tính 28 $\rightarrow D$ & 28 \\
+CNN-stem & một vị trí trên feature map $7\times7$ của CNN 2 tầng (32, 64 kênh) + conv $1\times1$ về $D$ kênh & 49 \\
+\bottomrule
+\end{tabular}
+\caption{Các cách tokenize ảnh $28\times28$ trong E2.}
+\end{table}
+
+Patch embedding được cài bằng \texttt{nn.Conv2d} với \texttt{kernel\_size = stride = p}. Phép này tương
+đương hoàn toàn với cắt ảnh thành các ô $p\times p$, flatten từng ô rồi nhân với cùng một ma trận chiếu
+(được kiểm tra trong test \texttt{test\_patch\_conv\_equals\_patchify\_plus\_linear}).
+Token theo hàng có ý nghĩa gần với cách E3 đưa ảnh vào LSTM/GRU, nên hai bài so sánh được với nhau.
+
+\subsection{Thiết lập so sánh}
+\begin{itemize}
+  \item \textbf{Tự viết vs. PyTorch (cùng tokenizer):} hai lần chạy xuất phát từ \emph{cùng} trọng số khởi tạo
+        (dựng model PyTorch với seed cố định rồi chép sang bản tự viết), cùng thứ tự batch và dropout attention
+        bằng 0. Khác biệt còn lại chỉ đến từ cách tính MSA (kernel \texttt{scaled\_dot\_product\_attention} của
+        PyTorch so với các phép toán tường minh).
+  \item \textbf{Giữa các tokenizer:} cùng encoder, cùng siêu tham số, \res{E2-cfg-epochs} epoch, AdamW
+        (LR $10^{-3}$, weight decay \res{E2-cfg-wd}), warmup 1 epoch rồi cosine.
+\end{itemize}
+
+\subsection{Kết quả}
+\begin{table}[H]
+\centering\small
+\gen{e2_table.tex}
+\caption{Kết quả E2 theo tokenizer và cài đặt MSA.}
+\label{tab:e2}
+\end{table}
+
+\begin{table}[H]
+\centering\small
+\gen{e2_impl_compare.tex}
+\caption{MSA tự viết so với \texttt{nn.MultiheadAttention} trên cùng tokenizer.}
+\label{tab:e2impl}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\genfig{e2_curves.pdf}{\linewidth}
+\caption{Đường cong học của E2. Màu: tokenizer; nét liền: MSA tự viết, nét gạch: PyTorch.}
+\label{fig:e2curves}
+\end{figure}
+
+\begin{table}[H]
+\centering\small
+\gen{e2_bench.tex}
+\caption{Chi phí một lớp MSA theo số token $N$.}
+\label{tab:e2bench}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\genfig{e2_bench.pdf}{0.62\linewidth}
+\caption{Thời gian forward + backward của một lớp MSA theo số token (trục log–log).}
+\label{fig:e2bench}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\genfig{e2_cls_attention.png}{\linewidth}
+\caption[Attention của token CLS ở khối encoder cuối (patch 4$\times$4, MSA tự viết).]{Attention của token CLS tới 49 patch ở khối encoder cuối (trung bình 4 head), mô hình patch 4$\times$4
+dùng MSA tự viết. Mỗi cột là ảnh test đầu tiên của một lớp; hàng dưới phủ bản đồ attention lên ảnh (sáng = cao).
+Hình sinh từ notebook \texttt{E2/E2.ipynb}.}
+\label{fig:e2cls}
+\end{figure}
+
+\subsection{Nhận xét}
+\begin{itemize}
+  \item \textbf{MSA tự viết đúng:} sai lệch lớn nhất so với \texttt{nn.MultiheadAttention} là
+        \res{E2-check-f64} (float64) và \res{E2-check-f32} (float32) ở cả đầu ra, ma trận attention lẫn gradient;
+        số tham số bằng nhau ($4(D^2+D)$).
+  \item \textbf{Huấn luyện từ cùng khởi tạo (Bảng~\ref{tab:e2impl}):}
+        \begin{itemize}
+          \item Test accuracy chênh \res{E2-patch4-accdiff} điểm (patch 4$\times$4) và \res{E2-row-accdiff} điểm
+                (theo hàng).
+          \item Hai đường cong gần như trùng nhau (Hình~\ref{fig:e2curves}). Val accuracy lệch lớn nhất
+                \res{E2-patch4-maxvaldiff} điểm ở epoch đầu, sau đó dưới 1 điểm.
+          \item Hai bản tính cùng một hàm. Khác biệt chỉ do sai số làm tròn (thứ tự phép tính khác nhau giữa các
+                kernel) tích lũy qua khoảng 8\,400 bước cập nhật, nhỏ hơn mức dao động giữa các epoch.
+        \end{itemize}
+  \item \textbf{Tốc độ huấn luyện không có bên thắng rõ:} tỉ lệ thời gian/epoch tự viết so với PyTorch là
+        \res{E2-patch4-timeratio} (patch 4$\times$4) và \res{E2-row-timeratio} (theo hàng). Với $N\le 50$ token,
+        ma trận attention rất nhỏ nên thời gian chủ yếu nằm ở các tầng Linear, FFN, LayerNorm và chi phí gọi kernel.
+        Chênh lệch chỉ khoảng 10\% và ngược chiều nhau giữa hai tokenizer, nên không kết luận được bên nào nhanh hơn.
+  \item \textbf{Suy luận thì PyTorch nhanh hơn:} \res{E2-patch4-infratio} lần (patch 4$\times$4) và
+        \res{E2-row-infratio} lần (theo hàng). Ở chế độ \texttt{eval()} không tính gradient,
+        \texttt{nn.MultiheadAttention} chuyển sang ``fast path'', gộp các bước của MSA vào một hàm C++ tối ưu.
+  \item \textbf{Khác biệt thật nằm ở bộ nhớ khi $N$ lớn (Bảng~\ref{tab:e2bench}):}
+        \begin{itemize}
+          \item Với $N=784$ (mỗi pixel một token), bản tự viết dùng \res{E2-bench-784-scratch-mem}\,MB, PyTorch
+                chỉ \res{E2-bench-784-torch-mem}\,MB (ít hơn \res{E2-bench-784-memratio} lần); thời gian
+                \res{E2-bench-784-scratch-ms} so với \res{E2-bench-784-torch-ms}\,ms.
+          \item Riêng ma trận $A$ đã chiếm \res{E2-bench-784-attnmb}\,MB và bản tự viết phải lưu nó cho backward.
+                Kernel \texttt{scaled\_dot\_product\_attention} của PyTorch không tạo ra toàn bộ ma trận
+                $N\times N$ mà tính lại khi backward.
+        \end{itemize}
+  \item \textbf{Chi phí theo $N$ (Hình~\ref{fig:e2bench}):} từ 49 lên 784 token ($N$ tăng 16 lần) thời gian tăng
+        khoảng \res{E2-bench-ratio-784-49} lần.
+        \begin{itemize}
+          \item Ở $N$ nhỏ thời gian gần như không đổi (\res{E2-bench-16-scratch-ms}\,ms với 16 token,
+                \res{E2-bench-49-scratch-ms}\,ms với 49 token) vì GPU chưa được dùng hết và chi phí gọi kernel
+                chiếm phần lớn.
+          \item Ở $N$ lớn phần $N^2$ của attention chiếm ưu thế: từ 196 lên 784 token ($N$ tăng 4 lần) thời gian
+                tăng khoảng 11 lần.
+        \end{itemize}
+  \item \textbf{So sánh tokenizer:} CNN-stem \res{E2-cnn-scratch-test}\% > theo hàng \res{E2-row-scratch-test}\% >
+        patch 4$\times$4 \res{E2-patch4-scratch-test}\% $\approx$ patch 7$\times$7 \res{E2-patch7-scratch-test}\%.
+        \begin{itemize}
+          \item Patch 7$\times$7 chỉ có 16 token mà gần bằng patch 4$\times$4 (49 token), trong khi nhanh hơn
+                (\res{E2-patch7-scratch-epochtime} so với \res{E2-patch4-scratch-epochtime}\,s/epoch; suy luận
+                \res{E2-patch7-scratch-inftime} so với \res{E2-patch4-scratch-inftime}\,s). Tăng gấp ba số token
+                không đem lại lợi ích ở bài này.
+          \item Token CNN-stem nhìn vùng $10\times10$ pixel (receptive field sau hai conv $3\times3$ và hai
+                maxpool) và các vùng chồng lên nhau, đã qua phi tuyến, nên mang đặc trưng cục bộ tốt hơn một ô
+                $4\times4$ chỉ chiếu tuyến tính.
+        \end{itemize}
+  \item \textbf{Token CLS nhìn vào đâu (Hình~\ref{fig:e2cls}):} ở khối cuối, attention của token CLS khá thưa,
+        mỗi ảnh chỉ dồn vào vài patch. Một số vị trí dễ hiểu: khe giữa hai ống quần (Trouser), mép dưới của áo
+        (Pullover, Shirt), góc túi (Bag). Với Dress, attention trải lên phần nền hai bên váy, tức mô hình dựa vào
+        đường viền tổng thể. Tuy vậy, đến khối thứ \res{E2-cfg-depth} mỗi token đã trộn thông tin từ các token khác
+        qua các khối trước, nên bản đồ này chỉ mang tính gợi ý, không giải thích đầy đủ quyết định của mô hình.
+  \item \textbf{Overfit:} CNN-stem có train \res{E2-cnn-scratch-train}\% so với val \res{E2-cnn-scratch-val}\%;
+        val loss thấp nhất ở epoch \res{E2-cnn-scratch-vallossmin-epoch} rồi tăng lại. Các bản patch và theo hàng
+        có val loss thấp nhất ở epoch 16--19, nên có thể còn tăng nhẹ nếu huấn luyện lâu hơn.
+  \item \textbf{So với E1:} mọi Transformer (khoảng 306--330 nghìn tham số) đều thua CNN của E1
+        (\res{E1-cnn-test}\%). Các bản chỉ dùng patch ngang mức MLP (\res{E1-mlp-test}\%). Với 54\,000 ảnh nhỏ
+        và không tăng cường dữ liệu, Transformer thiếu inductive bias không gian; ghép CNN-stem vào đã thu hẹp phần
+        lớn khoảng cách.
+\end{itemize}
+
+% ================================================================== 4. E3
+\section{E3 — LSTM và GRU trên chuỗi ảnh}
+
+\subsection{Biến ảnh thành chuỗi}
+Ảnh $(1,28,28)$ được biến thành chuỗi $(T, F)$ theo hai cách (\texttt{E3/models.py}, hàm \texttt{to\_sequence}):
+\begin{itemize}
+  \item \textbf{Theo hàng:} bước thời gian $t$ là hàng thứ $t$ của ảnh, đọc từ trên xuống: $T=28$, $F=28$.
+  \item \textbf{Theo patch 7$\times$7:} ảnh được chia thành lưới $4\times4$ patch, duyệt theo thứ tự hàng
+        (trái sang phải, trên xuống dưới); mỗi patch flatten thành 49 giá trị: $T=16$, $F=49$.
+\end{itemize}
+Hai cách này đánh đổi độ dài chuỗi và lượng thông tin mỗi bước: chuỗi theo hàng dài hơn nhưng mỗi bước chỉ
+thấy một dải mỏng; chuỗi patch ngắn hơn nhưng phá vỡ tính liên tục theo chiều ngang giữa các hàng patch.
+
+\subsection{Mô hình}
+Chuỗi đi qua \texttt{nn.LSTM} hoặc \texttt{nn.GRU} (\res{E3-cfg-layers} tầng, hidden \res{E3-cfg-hidden},
+dropout 0.2 giữa các tầng, \texttt{batch\_first=True}); hidden state của bước cuối ở tầng trên cùng đi qua
+một tầng Linear ra 10 logits. Với kích thước đầu vào $F$, hidden $H$ và $g$ cổng
+($g=4$ với LSTM: input, forget, cell, output; $g=3$ với GRU: reset, update, new), số tham số tầng thứ nhất là
+\[ g\,(HF + H^2 + 2H), \]
+nên với cùng $H$ GRU có đúng $3/4$ số tham số hồi quy của LSTM. Huấn luyện: \res{E3-cfg-epochs} epoch,
+AdamW (LR $10^{-3}$, weight decay $10^{-4}$), cosine, cắt gradient theo chuẩn \res{E3-cfg-clip}.
+
+\subsection{Baseline không hồi quy}
+MLP và CNN lấy lại từ E1 (cùng split, cùng seed, checkpoint tốt nhất theo validation).
+
+\subsection{Kết quả}
+\begin{table}[H]
+\centering\small
+\gen{e3_table.tex}
+\caption{Kết quả E3: LSTM và GRU trên hai cách biểu diễn chuỗi, so với MLP và CNN.}
+\label{tab:e3}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\genfig{e3_curves.pdf}{\linewidth}
+\caption{Đường cong học của E3 và hai baseline. Xanh: LSTM, cam: GRU; nét liền: theo hàng, nét gạch: patch.}
+\label{fig:e3curves}
+\end{figure}
+
+\subsection{Khả năng tích lũy thông tin theo thời gian}
+Vì LSTM/GRU một chiều, output tại bước $t$ chỉ phụ thuộc $t$ phần đầu của chuỗi. Đưa output đó qua tầng
+phân loại cho biết mô hình dự đoán thế nào khi mới ``đọc'' được một phần ảnh, không cần huấn luyện lại.
+Với MLP và CNN, ảnh được giữ $k$ hàng đầu và các hàng còn lại thay bằng pixel đen. Không mô hình nào được
+huấn luyện với ảnh bị che, nên đây là phép thử như nhau cho cả hai loại mô hình (\texttt{E3/temporal.py}).
+
+\begin{figure}[H]
+\centering
+\genfig{e3_prefix.pdf}{0.75\linewidth}
+\caption{Test accuracy theo phần trăm số pixel đã thấy (đọc từ trên xuống).}
+\label{fig:e3prefix}
+\end{figure}
+
+\subsection{Nhận xét}
+\begin{itemize}
+  \item \textbf{GRU tốt hơn LSTM ở cả hai cách biểu diễn:}
+        \begin{itemize}
+          \item Theo hàng: \res{E3-gru-rows-test}\% so với \res{E3-lstm-rows-test}\%.
+          \item Patch 7$\times$7: \res{E3-gru-patch7-test}\% so với \res{E3-lstm-patch7-test}\%.
+          \item GRU chỉ dùng khoảng 3/4 tham số hồi quy (\res{E3-gru-rows-params} so với \res{E3-lstm-rows-params}).
+                Một cách giải thích: với chuỗi ngắn (16--28 bước), cell state riêng của LSTM chưa phát huy tác
+                dụng, trong khi GRU ít cổng hơn nên dễ tối ưu hơn trong 15 epoch.
+          \item Thời gian/epoch gần như nhau (\res{E3-gru-rows-epochtime} so với \res{E3-lstm-rows-epochtime}\,s)
+                vì cả hai chạy bằng kernel cuDNN.
+        \end{itemize}
+  \item \textbf{Theo hàng tốt hơn theo patch} với cả hai loại cell. Chuỗi patch ngắn hơn (16 bước) nhưng thứ tự
+        quét theo hàng làm hai patch liền nhau theo chiều dọc cách nhau 4 bước. Patch cuối mỗi hàng patch (mép
+        phải) lại đứng ngay trước patch đầu hàng sau (mép trái), nên thứ tự thời gian không phản ánh đúng vị trí
+        không gian.
+  \item \textbf{So với baseline (Bảng~\ref{tab:e3}):}
+        \begin{itemize}
+          \item GRU theo hàng (\res{E3-gru-rows-test}\%) vượt MLP (\res{E1-mlp-test}\%) với chưa tới một phần ba
+                số tham số. LSTM theo hàng ngang MLP; hai bản theo patch thấp hơn MLP.
+          \item Mọi RNN đều kém CNN (\res{E1-cnn-test}\%) khoảng 3--5 điểm: RNN chỉ khai thác thứ tự theo một
+                chiều, còn CNN khai thác tính cục bộ theo cả hai chiều.
+          \item Transformer token theo hàng ở E2 đạt \res{E2-row-scratch-test}\%, xấp xỉ GRU theo hàng: với cùng
+                cách coi mỗi hàng là một phần tử chuỗi, hồi quy và attention cho kết quả tương đương ở bài này.
+        \end{itemize}
+  \item \textbf{Chưa overfit:} val loss của các RNN vẫn thấp nhất ở những epoch cuối (LSTM theo hàng: epoch
+        \res{E3-lstm-rows-vallossmin-epoch}); khoảng cách train–val khoảng 3--4 điểm. Nhiều khả năng còn cải
+        thiện nếu huấn luyện lâu hơn, khác với CNN đã bắt đầu tăng val loss.
+  \item \textbf{Thí nghiệm nhìn một phần ảnh (Hình~\ref{fig:e3prefix}) cho kết quả trái với dự đoán ban đầu:}
+        \begin{itemize}
+          \item Khi mới thấy 50\% số pixel (14 hàng trên), LSTM/GRU theo hàng đạt \res{E3-prefix-lstm-rows-half}\%
+                và \res{E3-prefix-gru-rows-half}\%, MLP bị che \res{E3-prefix-mlp-masked-rows-half}\%, còn CNN bị
+                che đạt \res{E3-prefix-cnn-masked-rows-half}\%. Ở 75\%: \res{E3-prefix-lstm-rows-quarter3}\%,
+                \res{E3-prefix-gru-rows-quarter3}\%, \res{E3-prefix-mlp-masked-rows-quarter3}\% và
+                \res{E3-prefix-cnn-masked-rows-quarter3}\%. RNN \emph{không} dự đoán sớm tốt hơn CNN.
+          \item Accuracy của RNN tăng dần theo số hàng đã đọc và tăng nhanh nhất khi đọc phần giữa ảnh (50--75\%).
+                Điều này cho thấy mô hình thực sự tích lũy thông tin qua hidden state và quyết định dựa trên toàn
+                bộ chuỗi. Nhưng loss
+                chỉ tính ở bước cuối, nên hidden state giữa chừng không được huấn luyện để phân loại.
+          \item Cùng thấy đúng 14 hàng trên (8 patch đầu), mô hình theo patch chỉ đạt
+                \res{E3-prefix-lstm-patch7-half}\% (LSTM) và \res{E3-prefix-gru-patch7-half}\% (GRU), thấp hơn hẳn
+                bản theo hàng. GRU patch còn giảm từ \res{E3-prefix-gru-patch7-quarter}\% xuống
+                \res{E3-prefix-gru-patch7-half}\% khi thấy thêm ảnh. Cách biểu diễn ảnh hưởng mạnh đến việc trạng thái
+                trung gian ``đọc'' được hay không.
+          \item Hướng cải thiện nếu muốn mô hình dự đoán sớm: tính loss ở mọi bước, hoặc dùng RNN hai chiều nếu
+                không cần dự đoán sớm.
+        \end{itemize}
+  \item \textbf{Chi phí:} RNN chỉ mất khoảng 1.8--2.2\,s/epoch, nhanh hơn CNN (\res{E1-cnn-epochtime}\,s) nhờ
+        chuỗi ngắn và kernel cuDNN. Tuy vậy các bước thời gian phải tính tuần tự nên khó song song hóa khi chuỗi dài.
+\end{itemize}
+
+% ================================================================== 5. AI
+\section{Khai báo sử dụng công cụ AI}
+Theo quy định của môn học (được phép dùng AI nhưng phải hiểu và bảo vệ được code cùng số liệu), tôi sử dụng
+Claude (Anthropic) để hỗ trợ viết mã nguồn PyTorch cho E1–E3, các test kiểm chứng, script sinh bảng/hình,
+khung báo cáo LaTeX và bản nháp phần nhận xét. Tôi tự chạy toàn bộ thí nghiệm trên Google Colab
+(GPU \res{env-device}), đối chiếu từng nhận xét với số liệu trong \texttt{results/}, kiểm tra tính đúng qua các
+test tự động (\texttt{tests/test\_all.py}, \texttt{E2/check\_msa.py}), và chịu trách nhiệm về toàn bộ mã nguồn
+và số liệu đã nộp.
+
+% ================================================================== PHỤ LỤC
+\appendix
+\section{Cấu trúc repository và cách chạy}
+\begin{lstlisting}[language={},caption={Cấu trúc repository}]
+common/   data.py   engine.py   utils.py      # split, training loop, utilities
+E1/       models.py train.py E1.ipynb
+E2/       msa.py tokenizers.py model.py train.py check_msa.py bench_msa.py E2.ipynb
+E3/       models.py train.py temporal.py E3.ipynb
+tests/    test_all.py
+scripts/  make_report_assets.py build_notebooks.py
+results/  E1/ E2/ E3/                              # history.csv, summary.json, test logits
+reports/  exercises.tex  exercises.pdf  generated/
+run_all.ipynb   run_all.sh   index.html (GitHub Pages)
+\end{lstlisting}
+Chạy toàn bộ: \texttt{bash run\_all.sh} (hoặc notebook \texttt{run\_all.ipynb} trên Google Colab), sau đó
+\texttt{cd reports \&\& xelatex exercises.tex} (hai lần). Mỗi notebook \texttt{Ei/Ei.ipynb} tự chứa toàn bộ
+code của bài đó và chạy được độc lập trên Colab.
+
+\end{document}

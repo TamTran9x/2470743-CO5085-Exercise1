@@ -1,0 +1,46 @@
+{
+  "name": "E3-lstm-rows",
+  "params": 214282,
+  "best_epoch": 15,
+  "best_val_acc": 0.9038333333333334,
+  "test_acc": 0.8987,
+  "test_loss": 0.28707514703273773,
+  "final_train_acc": 0.9359259259259259,
+  "final_train_loss": 0.177822292804718,
+  "mean_epoch_time": 2.1545581664285822,
+  "total_train_time": 33.21848206599998,
+  "test_inference_time": 0.16562458799990054,
+  "data_sizes": {
+    "train": 54000,
+    "val": 6000,
+    "test": 10000
+  },
+  "norm_mean": 0.2858346998691559,
+  "norm_std": 0.3529006540775299,
+  "config": {
+    "epochs": 15,
+    "lr": 0.001,
+    "weight_decay": 0.0001,
+    "warmup_epochs": 0.0,
+    "grad_clip": 1.0,
+    "label_smoothing": 0.0,
+    "seed": 42,
+    "extra": {
+      "exercise": "E3",
+      "cell": "lstm",
+      "seq_mode": "rows",
+      "seq_len": 28,
+      "input_size": 28,
+      "hidden": 128,
+      "layers": 2,
+      "dropout": 0.2,
+      "batch_size": 128
+    }
+  },
+  "env": {
+    "torch": "2.11.0+cu130",
+    "cuda_available": true,
+    "device_name": "Tesla T4",
+    "torchvision": "0.26.0+cu130"
+  }
+}

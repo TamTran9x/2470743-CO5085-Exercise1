@@ -1,0 +1,40 @@
+{
+  "name": "E1-cnn",
+  "params": 468010,
+  "best_epoch": 15,
+  "best_val_acc": 0.9383333333333334,
+  "test_acc": 0.9351,
+  "test_loss": 0.22899207472801208,
+  "final_train_acc": 0.9899074074074075,
+  "final_train_loss": 0.0339585209461274,
+  "mean_epoch_time": 3.8963129830714087,
+  "total_train_time": 60.529422195999814,
+  "test_inference_time": 0.3840110909999339,
+  "data_sizes": {
+    "train": 54000,
+    "val": 6000,
+    "test": 10000
+  },
+  "norm_mean": 0.2858346998691559,
+  "norm_std": 0.3529006540775299,
+  "config": {
+    "epochs": 15,
+    "lr": 0.001,
+    "weight_decay": 0.0001,
+    "warmup_epochs": 0.0,
+    "grad_clip": 0.0,
+    "label_smoothing": 0.0,
+    "seed": 42,
+    "extra": {
+      "exercise": "E1",
+      "model": "cnn",
+      "batch_size": 128
+    }
+  },
+  "env": {
+    "torch": "2.11.0+cu130",
+    "cuda_available": true,
+    "device_name": "Tesla T4",
+    "torchvision": "0.26.0+cu130"
+  }
+}

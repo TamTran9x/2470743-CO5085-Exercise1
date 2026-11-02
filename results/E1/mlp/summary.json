@@ -1,0 +1,40 @@
+{
+  "name": "E1-mlp",
+  "params": 535818,
+  "best_epoch": 15,
+  "best_val_acc": 0.9018333333333334,
+  "test_acc": 0.899,
+  "test_loss": 0.3034628376364708,
+  "final_train_acc": 0.9400740740740741,
+  "final_train_loss": 0.1596768374133993,
+  "mean_epoch_time": 1.258533635499995,
+  "total_train_time": 19.178239185999928,
+  "test_inference_time": 0.0706950810000535,
+  "data_sizes": {
+    "train": 54000,
+    "val": 6000,
+    "test": 10000
+  },
+  "norm_mean": 0.2858346998691559,
+  "norm_std": 0.3529006540775299,
+  "config": {
+    "epochs": 15,
+    "lr": 0.001,
+    "weight_decay": 0.0001,
+    "warmup_epochs": 0.0,
+    "grad_clip": 0.0,
+    "label_smoothing": 0.0,
+    "seed": 42,
+    "extra": {
+      "exercise": "E1",
+      "model": "mlp",
+      "batch_size": 128
+    }
+  },
+  "env": {
+    "torch": "2.11.0+cu130",
+    "cuda_available": true,
+    "device_name": "Tesla T4",
+    "torchvision": "0.26.0+cu130"
+  }
+}

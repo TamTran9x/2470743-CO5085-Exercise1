@@ -1,0 +1,46 @@
+{
+  "name": "E3-gru-rows",
+  "params": 161034,
+  "best_epoch": 13,
+  "best_val_acc": 0.9061666666666667,
+  "test_acc": 0.906,
+  "test_loss": 0.2609808534383774,
+  "final_train_acc": 0.9344814814814815,
+  "final_train_loss": 0.1795114313584787,
+  "mean_epoch_time": 1.803204852999995,
+  "total_train_time": 26.931215860999828,
+  "test_inference_time": 0.314964246000045,
+  "data_sizes": {
+    "train": 54000,
+    "val": 6000,
+    "test": 10000
+  },
+  "norm_mean": 0.2858346998691559,
+  "norm_std": 0.3529006540775299,
+  "config": {
+    "epochs": 15,
+    "lr": 0.001,
+    "weight_decay": 0.0001,
+    "warmup_epochs": 0.0,
+    "grad_clip": 1.0,
+    "label_smoothing": 0.0,
+    "seed": 42,
+    "extra": {
+      "exercise": "E3",
+      "cell": "gru",
+      "seq_mode": "rows",
+      "seq_len": 28,
+      "input_size": 28,
+      "hidden": 128,
+      "layers": 2,
+      "dropout": 0.2,
+      "batch_size": 128
+    }
+  },
+  "env": {
+    "torch": "2.11.0+cu130",
+    "cuda_available": true,
+    "device_name": "Tesla T4",
+    "torchvision": "0.26.0+cu130"
+  }
+}

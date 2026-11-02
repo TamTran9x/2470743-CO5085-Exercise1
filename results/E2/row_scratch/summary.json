@@ -1,0 +1,47 @@
+{
+  "name": "E2-row-scratch",
+  "params": 305962,
+  "best_epoch": 20,
+  "best_val_acc": 0.9063333333333333,
+  "test_acc": 0.9009,
+  "test_loss": 0.30745173096656797,
+  "final_train_acc": 0.9502407407407407,
+  "final_train_loss": 0.1352144952725481,
+  "mean_epoch_time": 5.484022898526351,
+  "total_train_time": 110.0650793950008,
+  "test_inference_time": 0.2790946279999389,
+  "data_sizes": {
+    "train": 54000,
+    "val": 6000,
+    "test": 10000
+  },
+  "norm_mean": 0.2858346998691559,
+  "norm_std": 0.3529006540775299,
+  "config": {
+    "epochs": 20,
+    "lr": 0.001,
+    "weight_decay": 0.05,
+    "warmup_epochs": 1.0,
+    "grad_clip": 0.0,
+    "label_smoothing": 0.0,
+    "seed": 42,
+    "extra": {
+      "exercise": "E2",
+      "tokenizer": "row",
+      "attn_impl": "scratch",
+      "num_tokens": 29,
+      "embed_dim": 96,
+      "depth": 4,
+      "heads": 4,
+      "mlp_ratio": 2.0,
+      "dropout": 0.1,
+      "batch_size": 128
+    }
+  },
+  "env": {
+    "torch": "2.11.0+cu130",
+    "cuda_available": true,
+    "device_name": "Tesla T4",
+    "torchvision": "0.26.0+cu130"
+  }
+}

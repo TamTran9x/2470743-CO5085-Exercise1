@@ -1,0 +1,18 @@
+\begin{tabular}{@{}l@{}}
+\begin{tabular}{rrrlrrrl}
+\toprule
+$D$ & $h$ & $N$ & kiểu số & lệch output & lệch attention & lệch gradient & kết quả \\
+\midrule
+32 & 4 & 10 & float64 & 2.8e-16 & 1.7e-16 & 4.4e-16 & đạt \\
+96 & 4 & 50 & float64 & 2.2e-16 & 1.7e-16 & 3.9e-16 & đạt \\
+96 & 8 & 29 & float64 & 2.8e-16 & 1.7e-16 & 2.8e-16 & đạt \\
+64 & 1 & 17 & float64 & 0.0e+00 & 0.0e+00 & 5.6e-17 & đạt \\
+32 & 4 & 10 & float32 & 8.9e-08 & 8.9e-08 & 1.3e-07 & đạt \\
+96 & 4 & 50 & float32 & 1.3e-07 & 1.3e-07 & 1.5e-07 & đạt \\
+96 & 8 & 29 & float32 & 1.3e-07 & 1.2e-07 & 1.5e-07 & đạt \\
+64 & 1 & 17 & float32 & 1.3e-07 & 1.0e-07 & 2.5e-07 & đạt \\
+\bottomrule
+\end{tabular}
+\\[2pt]
+{\footnotesize Sai lệch tuyệt đối lớn nhất giữa bản tự viết và nn.MultiheadAttention khi dùng chung trọng số (chạy trên cuda).}
+\end{tabular}

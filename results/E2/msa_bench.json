@@ -1,0 +1,53 @@
+{
+  "device": "cuda",
+  "embed_dim": 96,
+  "heads": 4,
+  "iters": 20,
+  "results": [
+    {
+      "num_tokens": 16,
+      "batch": 128,
+      "scratch_ms": 1.9736168000008547,
+      "scratch_peak_mem_mb": 26.177734375,
+      "torch_ms": 1.5006051999989722,
+      "torch_peak_mem_mb": 34.9228515625,
+      "attn_matrix_mb": 0.5
+    },
+    {
+      "num_tokens": 49,
+      "batch": 128,
+      "scratch_ms": 2.025252700002511,
+      "scratch_peak_mem_mb": 50.16796875,
+      "torch_ms": 2.4814077000030466,
+      "torch_peak_mem_mb": 53.6123046875,
+      "attn_matrix_mb": 4.689453125
+    },
+    {
+      "num_tokens": 169,
+      "batch": 128,
+      "scratch_ms": 9.576198650000833,
+      "scratch_peak_mem_mb": 281.4306640625,
+      "torch_ms": 9.62534255000378,
+      "torch_peak_mem_mb": 138.1591796875,
+      "attn_matrix_mb": 55.783203125
+    },
+    {
+      "num_tokens": 196,
+      "batch": 128,
+      "scratch_ms": 12.012587700002086,
+      "scratch_peak_mem_mb": 367.7587890625,
+      "torch_ms": 12.97037919999866,
+      "torch_peak_mem_mb": 161.7978515625,
+      "attn_matrix_mb": 75.03125
+    },
+    {
+      "num_tokens": 784,
+      "batch": 128,
+      "scratch_ms": 131.86825134999935,
+      "scratch_peak_mem_mb": 5003.5712890625,
+      "torch_ms": 107.76442554999903,
+      "torch_peak_mem_mb": 566.9853515625,
+      "attn_matrix_mb": 1200.5
+    }
+  ]
+}
