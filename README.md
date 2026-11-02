@@ -12,7 +12,6 @@ Tập dữ liệu dùng chung: **Fashion-MNIST** (ảnh xám 28×28, 10 lớp).
 
 - Báo cáo chung: [`reports/exercises.pdf`](reports/exercises.pdf)
 - Mã nguồn: <https://github.com/TamTran9x/2470743-CO5085-Exercise1>
-- GitHub Pages: <https://tamtran9x.github.io/2470743-CO5085-Exercise1/>
 
 ## Môi trường
 
