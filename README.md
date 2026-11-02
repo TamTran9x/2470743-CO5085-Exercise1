@@ -1,8 +1,8 @@
 # CO5085 — Bài tập E1–E3
 
-Học sâu và ứng dụng trong thị giác máy tính, HK261 (2026–2027).
-Học viên thực hiện: **Trần Hoài Tâm** — MSHV 2470743.
-Tập dữ liệu dùng chung: **Fashion-MNIST** (ảnh xám 28×28, 10 lớp).
+Học sâu và ứng dụng trong thị giác máy tính, HK261 (2026–2027).  
+Học viên thực hiện: **Trần Hoài Tâm** — MSHV 2470743.  
+Tập dữ liệu dùng chung: **Fashion-MNIST** (ảnh xám 28×28, 10 lớp).  
 
 | Bài | Nội dung | Test acc tốt nhất | Hạn nộp |
 |---|---|---|---|
@@ -16,14 +16,12 @@ Tập dữ liệu dùng chung: **Fashion-MNIST** (ảnh xám 28×28, 10 lớp).
 
 ## Môi trường
 
-- Python ≥ 3.10, PyTorch ≥ 2.1, torchvision (GPU khuyến nghị, CPU vẫn chạy được nhưng chậm).
-- Gói khác: numpy, pandas, matplotlib.
+- Python ≥ 3.10, PyTorch ≥ 2.1, torchvision.
+- Các package: numpy, pandas, matplotlib.
 
 ```bash
 pip install -r requirements.txt
 ```
-
-Cách nhanh nhất là dùng notebook trên Google Colab (Runtime → Change runtime type → T4 GPU):
 
 | Notebook | Nội dung | Thời gian (T4) |
 |---|---|---|
@@ -31,11 +29,11 @@ Cách nhanh nhất là dùng notebook trên Google Colab (Runtime → Change run
 | [`E2/E2.ipynb`](E2/E2.ipynb) | MSA tự viết + PyTorch, kiểm chứng, benchmark, 4 tokenizer, attention map | ~15–20 phút |
 | [`E3/E3.ipynb`](E3/E3.ipynb) | LSTM/GRU trên chuỗi hàng và patch, baseline MLP/CNN, thí nghiệm nhìn một phần ảnh | ~5 phút |
 
-Mỗi notebook **tự chứa toàn bộ code** của bài đó (không import từ repo), tải riêng lên Colab là chạy được từ đầu
+Mỗi notebook **tự chứa toàn bộ code** của bài đó (không import từ repo), có thể upload lên Google Colab là chạy được từ đầu
 đến cuối. Notebook được sinh từ các module bằng `python scripts/build_notebooks.py`, nên code giống hệt script.
 `run_all.ipynb` chạy tất cả bằng các script trong repo.
 
-## Chạy
+## Run
 
 Tất cả lệnh chạy từ thư mục gốc của repo. Dữ liệu tự tải về `data/` ở lần đầu.
 
@@ -66,7 +64,7 @@ Mỗi lần huấn luyện ghi ra:
 | `best.pt` | trọng số có val accuracy cao nhất |
 | `test_outputs.npz` | logits và nhãn trên tập test (để vẽ confusion matrix, tìm mẫu sai) |
 
-Thư mục `results/` trong repo là kết quả đã dùng cho báo cáo (chạy trên Colab, GPU Tesla T4, PyTorch 2.11).
+Thư mục `results/` trong repo là kết quả đã dùng cho báo cáo (chạy trên Google Colab, GPU Tesla T4, PyTorch 2.11).
 Checkpoint `best.pt` không được đưa lên để repo nhẹ; chạy lại lệnh huấn luyện sẽ tạo lại đúng các số liệu này
 vì seed, split và thứ tự batch đã được cố định.
 
