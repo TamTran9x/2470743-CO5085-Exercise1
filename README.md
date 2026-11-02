@@ -108,5 +108,5 @@ Trang `index.html` ở gốc repo liên kết tới repo và tới `reports/exer
 
 ## Sử dụng công cụ AI
 
-Mã nguồn được viết với sự hỗ trợ của Claude (Anthropic), theo sự cho phép của giảng viên. Chi tiết được
+Mã nguồn được viết với sự hỗ trợ của Claude (Anthropic) và ChatGPT (OpenAI), theo sự cho phép của giảng viên. Chi tiết được
 khai báo trong mục "Khai báo sử dụng công cụ AI" của báo cáo.
